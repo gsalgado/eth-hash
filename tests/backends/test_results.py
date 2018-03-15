@@ -72,6 +72,29 @@ def test_keccak_256_preimage(keccak, parts, expected_result):
     assert preimage.digest() == expected_result
 
 
+# XXX: A quick hack to show performance degradation of PreImage.digest() when compared to raw
+# pysha3's implementation. Run it with
+# 'pytest -s -k test_keccak_256_preimage_performance tests/backends/pysha3/'
+def test_keccak_256_preimage_performance(keccak):
+    import os, time, sha3  # noqa
+    preimage = keccak.new(b'foo')
+    sha3_keccak = sha3.keccak_256(b'foo')
+    i = 0
+    while True:
+        i += 1
+        v = os.urandom(1200)
+        preimage.update(v)
+        sha3_keccak.update(v)
+        if i % 1000 == 0:
+            t = time.time()
+            d1 = preimage.digest()
+            print("eth-hash: ", time.time() - t)
+            t = time.time()
+            d2 = sha3_keccak.digest()
+            print("sha3: ", time.time() - t)
+            assert d1 == d2
+
+
 def test_copy_keccak_256_preimage(keccak):
     preimage_origin = keccak.new(b'')
     preimage_copy = preimage_origin.copy()
